@@ -1,0 +1,206 @@
+
+Structure
+Hal Fulton
+Version 1.0
+License: The Ruby License
+
+This is a newer version of the older "SuperStruct" (sstruct) library.
+
+This is an easy way to create Struct-like classes; it converts easily
+between hashes and arrays, and it allows OpenStruct-like dynamic naming
+of members.
+
+Unlike Struct, it creates a "real" class, and it has real instance variables 
+with predictable names.
+
+A basic limitation is that the hash keys must be legal method names (unless
+used with send()).
+
+Basically, ss["alpha"], ss[:alpha], and ss.alpha all mean the same.
+
+
+NOTES:
+
+
+It's like a Struct...
+  - you can pass in a list of symbols for accessors
+  - it will create a class for you
+but...
+  - you don't have to pass in the class name
+  - it returns a "real" class
+    . instance variables have the expected names
+    . you can reopen and add methods
+  - it doesn't go into the Struct:: namespace
+  - it preserves the order of the fields
+  - you can use Strings instead of Symbols for the names
+
+It's like an Array...
+ - you can access the items by [number] and [number]=
+but...
+ - you can also access the items by ["name"] and ["name"]=
+ - you can access the items by accessors
+
+It's like an OpenStruct...
+ - (if you use .open instead of .new) you can add fields 
+   automatically with x.field or x.field=val
+but...
+ - you can initialize it like a Struct
+ - it preserves the order of the fields
+
+It's like a Hash...
+ - data can be accessed by ["name"]
+but...
+ - order (of entry or creation) is preserved
+ - arbitrary objects are not allowed (it does obj.to_str or obj.to_s)
+ - strings must be valid method names
+
+It's like Ara Howard's Named Array...
+ - we can access elements by ["name"] or ["name"]=
+but...
+ - you can access the items by accessors
+ - strings must be valid method names
+
+It's like Florian Gross's Keyed List...
+ (to be done)
+but...
+ - it preserves the order of the fields
+
+
+Some examples: (see test cases)
+--------------
+
+  # Need not assign to existing fields (default to nil)
+  myStruct = Structure.new(:alpha)
+  x = myStruct.new
+  x.alpha  # nil
+
+  # A value assigned at construction may be retrieved
+  myStruct = Structure.new(:alpha)
+  x = myStruct.new(234)
+  x.alpha  # 234
+
+  # Unassigned fields are nil
+  myStruct = Structure.new(:alpha,:beta)
+  x = myStruct.new(234)
+  x.beta  # nil
+
+  # An open structure may not construct with nonexistent fields
+  myStruct = Structure.open
+  x = myStruct.new(234)  # error
+
+  # An open structure may assign fields not previously existing
+  myStruct = Structure.open
+  x = myStruct.new
+  x.foo = 123
+  x.bar = 456
+
+  # The act of retrieving a nonexistent field from an open struct will
+  # create that field
+  myStruct = Structure.open
+  x = myStruct.new
+  x.foo   # nil
+
+  # A field (in an open struct) that is unassigned will be nil
+  myStruct = Structure.open
+  x = myStruct.new
+  y = x.foobar
+
+  # A struct created with new rather than open cannot reference nonexistent
+  # fields
+  myStruct = Structure.new
+  x = myStruct.new
+  x.foo  # error
+
+  # Adding a field to a struct will create a writer and reader for that field
+
+  # An open struct will also create a writer and a reader together
+
+  # A field has a real writer and reader corresponding to it
+
+  # A string will work as well as a symbol
+  myStruct = Structure.new("alpha")
+
+  # to_a will return an array of values
+  myStruct = Structure.new("alpha","beta","gamma")
+  x = myStruct.new(7,8,9)
+  assert(x.to_a == [7,8,9])
+
+  # Instance method 'members' will return a list of members (as strings)
+  myStruct = Structure.new(:alpha,"beta")
+  x = myStruct.new
+  assert_equal(["alpha","beta"],x.members)
+
+  # Class method 'members' will return a list of members (as strings)
+  myStruct = Structure.new(:alpha,"beta")
+  assert_equal(["alpha","beta"],myStruct.members)
+
+  # to_ary will allow a struct to be treated like an array in
+  # multiple assignment
+  myStruct = Structure.new("alpha","beta","gamma")
+  x = myStruct.new(7,8,9)
+  a,b,c = x
+  assert(b == 8)
+
+  # to_ary will allow a struct to be treated like an array in
+  # passed parameters
+  myStruct = Structure.new("alpha","beta","gamma")
+  x = myStruct.new(7,8,9)
+  b = meth(*x)
+
+  # to_hash will return a hash with fields as keys
+  myStruct = Structure.new("alpha","beta","gamma")
+  x = myStruct.new(7,8,9)
+  h = x.to_hash
+  assert_equal({"alpha"=>7,"beta"=>8,"gamma"=>9},h)
+
+  # A field name (String) may be used in a hash-like notation
+  myStruct = Structure.new("alpha","beta","gamma")
+  x = myStruct.new(7,8,9)
+  y = x["beta"]
+
+  # A field name (Symbol) may be used in a hash-like notation
+  myStruct = Structure.new("alpha","beta","gamma")
+  x = myStruct.new(7,8,9)
+  y = x[:beta]
+
+  # [offset,length] may be used as for arrays
+  myStruct = Structure.new("alpha","beta","gamma")
+  x = myStruct.new(7,8,9)
+  y = x[0,2]
+
+  # Ranges may be used as for arrays
+  myStruct = Structure.new("alpha","beta","gamma")
+  x = myStruct.new(7,8,9)
+  y = x[1..2]
+
+  # Adding a field to an open struct adds it to the instance
+  myStruct = Structure.open(:alpha)
+  x = myStruct.new
+  x.beta = 5
+
+  # Adding a field to an open struct adds it to the class also
+  myStruct = Structure.open(:alpha)
+  x = myStruct.new
+  x.beta = 5
+
+  # An array passed to Structure.new need not be starred
+  myStruct = Structure.new(%w[alpha beta gamma])
+  x = myStruct.new
+
+  # A hash passed to #set will set multiple values at once
+  myStruct = Structure.new(%w[alpha beta gamma])
+  x = myStruct.new
+  hash = {"alpha"=>234,"beta"=>345,"gamma"=>456}
+  x.set(hash)
+
+  # ||= works properly
+  x = Structure.open.new
+  x.foo ||= 333
+  x.bar = x.bar || 444
+
+  # attr_tester will create a ?-method
+  myStruct = Structure.new(:alive)
+  myStruct.attr_tester :alive
+  x = myStruct.new(true)
+  x.alive?  # true
+  
