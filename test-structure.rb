@@ -7,13 +7,8 @@
 
 require "test/unit"
 require "structure"
+require 'pp'
 
-
-class Regexp
-  def to_str
-    "rx"
-  end
-end
 
 class Tester < Test::Unit::TestCase
 
@@ -25,7 +20,9 @@ class Tester < Test::Unit::TestCase
   def test001a
     # Honors the to_str method
     Regexp.class_eval { define_method(:to_str) { self.to_s.split(":").last[0..-2] } }
-    assert_nothing_raised(ArgumentError) { Structure.new(/abc/) }
+    klass = nil
+    assert_nothing_raised(ArgumentError) { klass = Structure.new(/abc/) }
+    assert_equal(["abc"],klass.members)
     Regexp.class_eval { undef_method(:to_str) }
   end
   
@@ -276,11 +273,14 @@ class Tester < Test::Unit::TestCase
     assert_equal(%w[alpha beta gamma],x.members)
   end
   
-  def xtest034
+  def test034
     # A hash passed to Structure.new will initialize the values
+    # and return a structure, not a class
     hash = {"alpha"=>234,"beta"=>345,"gamma"=>456}
-    klass = Structure.new(hash)
-    assert_equal(%w[alpha beta gamma],x.members)
+    obj = Structure.new(hash)
+pp obj
+    assert_equal(%w[alpha beta gamma],obj.members.sort) # sort for Ruby 1.8
+    assert_equal(345, obj.beta)
 #   assert false, "Not implemented yet."
   end
   
@@ -329,6 +329,16 @@ class Tester < Test::Unit::TestCase
     assert(x.alpha?)
     assert_raises(NoMethodError) { x.beta? }  # ?-methods are not automatic
     assert(! x.gamma?)
+  end
+
+  def test040
+    # two classes don't interfere with each other
+    klass1 = Structure.new(:alpha, :beta, :gamma)
+    klass2 = Structure.new(:delta, :epsilon)
+    x1 = klass1.new(1,2,3)
+    x2 = klass2.new(4,5)
+    pp x1
+    pp x2
   end
   
 end

@@ -22,13 +22,36 @@
 
 class Structure
 
+  def Structure.parse_hash(hash, deep=false)
+    raise ArgumentError, "Expecting a hash" unless hash.is_a? Hash
+    obj = Structure.new(hash)
+    return obj unless deep
+    obj.members.each do |mem|
+      setter = mem + "="
+      this = obj.send(mem)
+      if this.is_a? Hash 
+puts "Got here: #{this.inspect}"
+        obj.send(setter, Structure.parse_hash(this, true)) unless this.empty?
+      end
+    end
+    obj
+  end
+
   def Structure.new(*args)
     @table = []
     @setsyms = []        # Setter symbols
 
+    hash_flag = false
     klass = Class.new
-    if (args.size == 1) && (args.first.is_a? Array)
-      args = args.first
+    if (args.size == 1) 
+      if args.first.is_a? Array
+        args = args.first
+      elsif args.first.is_a? Hash
+        hash_flag = true
+        hash = args.first
+        args = hash.keys
+        hash_vals = hash.values
+      end
     end
     strs = args.map {|x| x.to_s }
 
@@ -41,9 +64,9 @@ class Structure
         when k.is_a?(Symbol)
           # ok
         when k.respond_to?(:to_str)
-          # ok
+          k = k.to_str
 	when (! [String,Symbol].include? k.class)
-	  raise ArgumentError, "Need a String or Symbol"
+	  raise ArgumentError, "Need a String or Symbol, not '#{k}' (#{k.class})"
       end
       k = k.to_sym if k.is_a? String
       @table << k
@@ -167,7 +190,11 @@ class Structure
       end
 
     end
-    klass
+    if hash_flag
+      klass.new(*hash_vals)
+    else
+      klass
+    end
   end
 
 
