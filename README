@@ -1,7 +1,7 @@
 
 Structure
 Hal Fulton
-Version 1.0
+Version 1.0.3
 License: The Ruby License
 
 This is a newer version of the older "SuperStruct" (sstruct) library.
@@ -51,8 +51,8 @@ It's like a Hash...
  - data can be accessed by ["name"]
 but...
  - order (of entry or creation) is preserved
- - arbitrary objects are not allowed (it does obj.to_str or obj.to_s)
- - strings must be valid method names
+ - arbitrary objects as keys are not allowed (it does obj.to_str or obj.to_s)
+ - keys must be valid method names
 
 It's like Ara Howard's Named Array...
  - we can access elements by ["name"] or ["name"]=
@@ -187,11 +187,11 @@ Some examples: (see test cases)
   myStruct = Structure.new(%w[alpha beta gamma])
   x = myStruct.new
 
-  # A hash passed to #set will set multiple values at once
+  # A hash passed to #assign will set multiple values at once
   myStruct = Structure.new(%w[alpha beta gamma])
   x = myStruct.new
   hash = {"alpha"=>234,"beta"=>345,"gamma"=>456}
-  x.set(hash)
+  x.assign(hash)
 
   # ||= works properly
   x = Structure.open.new

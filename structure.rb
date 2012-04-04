@@ -1,7 +1,7 @@
 #
 # Structure
 # Hal Fulton
-# Version 1.0.0
+# Version 1.0.3
 # License: The Ruby License
 #
 # This is a newer version of the old "SuperStruct" (sstruct) library
@@ -22,15 +22,19 @@
 
 class Structure
 
-  def Structure.parse_hash(hash, deep=false)
+  def Structure.from_hash(hash)
     raise ArgumentError, "Expecting a hash" unless hash.is_a? Hash
     obj = Structure.new(hash)
-    return obj unless deep
+  end
+
+  def Structure.parse_hash(hash)
+    # Like from_hash, only "deep"
+    raise ArgumentError, "Expecting a hash" unless hash.is_a? Hash
+    obj = Structure.new(hash)
     obj.members.each do |mem|
       setter = mem + "="
       this = obj.send(mem)
       if this.is_a? Hash 
-puts "Got here: #{this.inspect}"
         obj.send(setter, Structure.parse_hash(this, true)) unless this.empty?
       end
     end
@@ -111,7 +115,7 @@ puts "Got here: #{this.inspect}"
       end
 
       define_method(:inspect) do
-        str = "#<#{self.class}:"
+        str = "#<#{self.class||"anonymous"}:"
         table.each {|item| str << " #{item}=#{self.send(item)}" }
         str + ">"
       end
@@ -148,7 +152,7 @@ puts "Got here: #{this.inspect}"
 	end
       end
 
-      define_method(:to_a)    { table.map {|x| eval("@"+x.to_s) } }
+      define_method(:to_a)    { puts local_variables; table.map {|x| eval("@"+x.to_s) } }
 
       define_method(:to_ary)  { to_a }
 

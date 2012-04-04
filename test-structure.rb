@@ -1,7 +1,7 @@
 #
 # Structure test code
 # Hal Fulton
-# Version 1.0.0 (in sync with library code)
+# Version 1.0.3 (in sync with library code)
 # License: The Ruby License
 #
 
