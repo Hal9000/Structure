@@ -28,14 +28,15 @@ class Structure
   end
 
   def Structure.parse_hash(hash)
-    # Like from_hash, only "deep"
+    # Like from_hash, only "deep"; every member must be a hash
     raise ArgumentError, "Expecting a hash" unless hash.is_a? Hash
     obj = Structure.new(hash)
     obj.members.each do |mem|
       setter = mem + "="
       this = obj.send(mem)
       if this.is_a? Hash 
-        obj.send(setter, Structure.parse_hash(this, true)) unless this.empty?
+        value = this.empty? ? this : Structure.parse_hash(this)
+        obj.send(setter, value) 
       end
     end
     obj
@@ -152,7 +153,7 @@ class Structure
 	end
       end
 
-      define_method(:to_a)    { puts local_variables; table.map {|x| eval("@"+x.to_s) } }
+      define_method(:to_a)    { table.map {|x| eval("@"+x.to_s) } }
 
       define_method(:to_ary)  { to_a }
 

@@ -278,7 +278,6 @@ class Tester < Test::Unit::TestCase
     # and return a structure, not a class
     hash = {"alpha"=>234,"beta"=>345,"gamma"=>456}
     obj = Structure.new(hash)
-pp obj
     assert_equal(%w[alpha beta gamma],obj.members.sort) # sort for Ruby 1.8
     assert_equal(345, obj.beta)
 #   assert false, "Not implemented yet."
@@ -336,9 +335,39 @@ pp obj
     klass1 = Structure.new(:alpha, :beta, :gamma)
     klass2 = Structure.new(:delta, :epsilon)
     x1 = klass1.new(1,2,3)
-    x2 = klass2.new(4,5)
-    pp x1
-    pp x2
+    x2 = *klass2.new(4,5)
+    assert_equal([1,2,3],x1.to_a)
+    assert_equal([4,5],x2)
+  end
+
+  def test041
+    # Capital letters are permitted
+    klass = Structure.new(:Alpha, :Beta, :Gamma)
+    x = klass.new(1,2,3)
+    assert_equal([1,2,3],x.to_a)
+    assert_equal(2,x.Beta)
+  end
+
+  def test042
+    # A hash can be converted directly
+    h1 = {:a => 12, :b => 23, :c => 34}
+    h2 = {"a" => 12, "b" => 23, "c" => 34}
+    s1 = Structure.from_hash(h1)
+    s2 = Structure.from_hash(h2)
+    assert_equal([12,23,34], s1.to_a.sort)
+    assert_equal(23, s1.b)
+    assert_equal([12,23,34], s2.to_a.sort)
+    assert_equal(34, s2.c)
+  end
+  
+  def test043
+    # A hash can be converted directly
+    h1 = { :alpha => {:this => 11, :that => 22}, 
+           :beta => {:foo => 33, :bar => 44}, :gamma => {}}
+    s1 = Structure.parse_hash(h1)
+    assert_equal(11, s1.alpha.this)
+    assert_equal(44, s1.beta.bar)
+    assert_equal({}, s1.gamma)
   end
   
 end
